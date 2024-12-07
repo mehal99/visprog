@@ -16,7 +16,7 @@ from transformers import (ViltProcessor, ViltForQuestionAnswering,
 from diffusers import StableDiffusionInpaintPipeline
 
 from .nms import nms
-from vis_utils import html_embed_image, html_colored_span, vis_masks
+from vis_utils import html_embed_image, html_colored_span, vis_masks, turboedit_img
 
 
 def parse_step(step_str,partial=False):
@@ -57,7 +57,50 @@ def html_arg_name(content):
     arg_name = html_colored_span(content, 'darkorange')
     return f'<b>{arg_name}</b>'
 
-    
+
+class ActionInterpreter():
+    step_name = 'ACTION'
+
+    def __init__(self):
+        print(f'Registering {self.step_name} step')
+
+    def parse(self,prog_step):
+        parse_result = parse_step(prog_step.prog_str)
+        step_name = parse_result['step_name']
+        image_var = parse_result['args']['image']
+        src_prompt_var = eval(parse_result['args']['src_prompt'])
+        target_prompt_var = eval(parse_result['args']['target_prompt'])
+        output_var = parse_result['output_var']
+        assert(step_name==self.step_name)
+        return image_var, src_prompt_var, target_prompt_var, output_var
+
+    def html(self, image, target_prompt, output_var, edited_img):
+        step_name = html_step_name(self.step_name)
+        src_img_str = html_embed_image(image)
+        edited_img_str = html_embed_image(edited_img)
+        output_var = html_var_name(output_var)
+        src_image_arg = html_arg_name('image')
+        # src_prompt_arg = html_arg_name('src_prompt')
+        target_prompt_arg = html_arg_name('target_prompt')
+
+        return f"""<div>{output_var}={step_name}({src_image_arg}={src_img_str}, {target_prompt_arg}="{target_prompt}")<br/><b>Edited Image:</b><br/>{edited_img_str}</div>"""
+
+    def execute(self, prog_step, inspect=False):
+        image_var, src_prompt, target_prompt, output_var = self.parse(prog_step)
+        image = prog_step.state[image_var]
+        # src_prompt = prog_step.state[src_prompt_var]
+        # target_prompt = prog_step.state[target_prompt_var]
+        edited_img = turboedit_img(image, src_prompt, target_prompt)
+        
+        prog_step.state[output_var] = edited_img
+
+        if inspect:
+            html_str = self.html(image, target_prompt, output_var, edited_img)
+            return edited_img, html_str
+        return edited_img
+
+
+
 class EvalInterpreter():
     step_name = 'EVAL'
 
@@ -1368,6 +1411,18 @@ def register_step_interpreters(dataset='nlvr'):
             REPLACE=ReplaceInterpreter(),
             EMOJI=EmojiInterpreter(),
             RESULT=ResultInterpreter()
+        )
+    elif dataset=='storygen':
+        return dict(
+            SEG=SegmentInterpreter(),
+            SELECT=SelectInterpreter(),
+            COLORPOP=ColorpopInterpreter(),
+            BGBLUR=BgBlurInterpreter(),
+            EMOJI=EmojiInterpreter(),
+            RESULT=ResultInterpreter(),
+            #Add text based image edit (action module)
+            STORYIMG=ActionInterpreter(),
+            # STORYTEXT=StoryTextInterpreter(),
         )
     elif dataset=='okDet':
         return dict(

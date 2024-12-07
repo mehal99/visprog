@@ -70,10 +70,15 @@ class ProgramGenerator():
         return np.exp(agg_fn(
             response.choices[0]['logprobs']['token_logprobs'][:i]))
 
+    
     def generate(self,inputs):
-        response = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=self.prompter(inputs),
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant for generating program instructions."},
+                {"role": "user", "content": self.prompter(inputs)}
+            ],
+            # prompt=self.prompter(inputs),
             temperature=self.temperature,
             max_tokens=512,
             top_p=self.top_p,

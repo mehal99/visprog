@@ -3,6 +3,7 @@ import base64
 import numpy as np
 from io import BytesIO
 import math
+from gradio_client import Client, handle_file
 
 def image_formatter(img_path,size=224,vertical_align='middle'):
     img = Image.open(img_path)
@@ -62,4 +63,15 @@ def vis_masks(img,objs,labels=None):
     cols=min(3,len(imgs))
     rows=math.ceil(len(imgs)/3)
     return image_grid(imgs, rows, cols)
-    
+
+def turboedit_img(image, src_prompt, target_prompt, seed, w1):
+    client = Client("turboedit/turbo_edit")
+    result = client.predict(
+        input_image=handle_file(image),
+        src_prompt=src_prompt,
+        tgt_prompt=target_prompt,
+        seed=seed,
+        w1=w1,
+        api_name="/main_pipeline"
+    )
+    return result
