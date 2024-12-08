@@ -64,14 +64,24 @@ def vis_masks(img,objs,labels=None):
     rows=math.ceil(len(imgs)/3)
     return image_grid(imgs, rows, cols)
 
-def turboedit_img(image, src_prompt, target_prompt, seed, w1):
+def turboedit_img(image, src_prompt, target_prompt, seed=20, w1=1.5):
     client = Client("turboedit/turbo_edit")
     result = client.predict(
-        input_image=handle_file(image),
+        input_image=handle_file(save_image_and_get_path(image)),
         src_prompt=src_prompt,
         tgt_prompt=target_prompt,
         seed=seed,
         w1=w1,
-        api_name="/main_pipeline"
+        api_name="/main_pipeline",
     )
-    return result
+    with Image.open(result) as img:
+        print(img)
+        return img
+
+    # return result
+
+def save_image_and_get_path(image, save_path="output_image.png"):
+    if image is None:
+        raise ValueError("No image found in init_state dictionary.")
+    image.save(save_path, format="PNG") 
+    return save_path

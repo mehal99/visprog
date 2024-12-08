@@ -85,10 +85,11 @@ class ProgramGenerator():
             frequency_penalty=0,
             presence_penalty=0,
             n=1,
-            logprobs=1
+            logprobs=True
         )
 
-        prob = self.compute_prob(response)
-        prog = response.choices[0]['text'].lstrip('\n').rstrip('\n')
-        return prog, prob
+        # prob = self.compute_prob(response)
+        prog = response.choices[0]['message']['content'].strip()
+        # prog = response.choices[0]['text'].lstrip('\n').rstrip('\n')
+        return prog
     

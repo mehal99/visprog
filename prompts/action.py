@@ -1,24 +1,20 @@
 PROMPT = """Think step by step to carry out the instruction.
 
-Instruction: Visualize this story: Fred is sleeping and snoring in a hammock in the yard. Fred sits on a hammock in the yard, turning around happily.
+Instruction: Visualize this story: Fred lays in a hammock in the yard. Fred is laying outside in a hammock. Something moves past Fred. Fred sits on a hammock in the yard. Fred is outside sitting in a hammock.
 Program:
-IMG0=STORYIMG(image=IMAGE, src_prompt='Fred is sleeping and snoring in a hammock in the yard', target_prompt='Fred sits on a hammock in the yard, turning around happily', seed = 200, w1 = 1.5)
-FINAL_RESULT=RESULT(var=IMAGE0)
+IMAGE0=STORYIMG(image=IMAGE, src_prompt='Fred lays in a hammock in the yard', target_prompt='Fred is laying outside in a hammock', seed = 200, w1 = 1.5)
+IMAGE1 = STORYIMG(image=IMAGE0, src_prompt='Fred is laying outside in a hammock', target_prompt='Something moves past Fred', seed = 200, w1 = 1.5)
+IMAGE2 = STORYIMG(image=IMAGE1, src_prompt='Something moves past Fred', target_prompt='Fred sits on a hammock in the yard', seed = 200, w1 = 1.5)
+IMAGE3 = STORYIMG(image=IMAGE2, src_prompt='Fred sits on a hammock in the yard', target_prompt='Fred is outside in a hammock', seed = 200, w1 = 1.5)
+FINAL_RESULT=RESULT(var=[IMAGE0, IMAGE1, IMAGE2, IMAGE3])
 
-Instruction: Visualize this story: Fred sits on a hammock in the yard, turning around happily. Something moves past Fred while Fred lays in a hammock outside. Fred watches it pass, then speaks.
+Instruction: Visualize this story: man wearing purple plays an instrument next to a microphone on a stage. man with violet dress wearing glasses talks into a microphone on stage. man with violet dress wearing glasses looks away from the microphone on stage. man with violet dress wearing glasses is talking without microphone. He is speaking to someone on the phone while wearing a purple hat.
 Program:
-IMG0=STORYIMG(image=IMAGE, src_prompt='Fred sits on a hammock in the yard, turning around happily', target_prompt='Something moves past Fred while Fred lays in a hammock outside. Fred watches it pass, then speaks.', seed = 200, w1 = 1.5)
-FINAL_RESULT=RESULT(var=IMAGE0)
-
-Instruction: Visualize this story: Barney is inside a brown room. Barney is walking in the desert.
-Program:
-IMG0=STORYIMG(image=IMAGE, src_prompt='Barney is inside a brown room', target_prompt='Barney is walking in the desert.', seed = 200, w1 = 1.5)
-FINAL_RESULT=RESULT(var=IMAGE0)
-
-Instruction: Visualize this story: Barney is looking in the window and speaking. Fred is in the room talking and his eyes are rolling.
-Program:
-IMG0=STORYIMG(image=IMAGE, src_prompt='Barney is looking in the window and speaking.', target_prompt='Fred is in the room talking and his eyes are rolling.', seed = 200, w1 = 1.5)
-FINAL_RESULT=RESULT(var=IMAGE0)
+IMAGE0=STORYIMG(image=IMAGE, src_prompt='man wearing purple plays an instrument next to a microphone on a stage', target_prompt='man with violet dress wearing glasses talks into a microphone on stage.', seed = 200, w1 = 1.5)
+IMAGE1 = STORYIMG(image=IMAGE0, src_prompt='man with violet dress wearing glasses talks into a microphone on stage.', target_prompt='man with violet dress wearing glasses looks away from the microphone on stage.', seed = 200, w1 = 1.5)
+IMAGE2 = STORYIMG(image=IMAGE1, src_prompt='man with violet dress wearing glasses looks away from the microphone on stage.', target_prompt='man with violet dress wearing glasses is talking without microphone.', seed = 200, w1 = 1.5)
+IMAGE3 = STORYIMG(image=IMAGE2, src_prompt='man with violet dress wearing glasses is talking without microphone.', target_prompt='He is speaking to someone on the phone while wearing a purple hat.', seed = 200, w1 = 1.5)
+FINAL_RESULT=RESULT(var=[IMAGE0, IMAGE1, IMAGE2, IMAGE3])
 
 Instruction: {instruction}
 Program:

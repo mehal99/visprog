@@ -59,7 +59,7 @@ def html_arg_name(content):
 
 
 class ActionInterpreter():
-    step_name = 'ACTION'
+    step_name = 'STORYIMG'
 
     def __init__(self):
         print(f'Registering {self.step_name} step')
@@ -83,15 +83,15 @@ class ActionInterpreter():
         # src_prompt_arg = html_arg_name('src_prompt')
         target_prompt_arg = html_arg_name('target_prompt')
 
-        return f"""<div>{output_var}={step_name}({src_image_arg}={src_img_str}, {target_prompt_arg}="{target_prompt}")<br/><b>Edited Image:</b><br/>{edited_img_str}</div>"""
+        return f"""<div>{edited_img_str},"{target_prompt}"</div>"""
 
     def execute(self, prog_step, inspect=False):
         image_var, src_prompt, target_prompt, output_var = self.parse(prog_step)
         image = prog_step.state[image_var]
         # src_prompt = prog_step.state[src_prompt_var]
-        # target_prompt = prog_step.state[target_prompt_var]
+        # target_prompt = prog_step.state[target_prompt_var] 
         edited_img = turboedit_img(image, src_prompt, target_prompt)
-        
+        print(html_embed_image(edited_img))
         prog_step.state[output_var] = edited_img
 
         if inspect:
@@ -1414,11 +1414,11 @@ def register_step_interpreters(dataset='nlvr'):
         )
     elif dataset=='storygen':
         return dict(
-            SEG=SegmentInterpreter(),
-            SELECT=SelectInterpreter(),
-            COLORPOP=ColorpopInterpreter(),
-            BGBLUR=BgBlurInterpreter(),
-            EMOJI=EmojiInterpreter(),
+            # SEG=SegmentInterpreter(),
+            # SELECT=SelectInterpreter(),
+            # COLORPOP=ColorpopInterpreter(),
+            # BGBLUR=BgBlurInterpreter(),
+            # EMOJI=EmojiInterpreter(),
             RESULT=ResultInterpreter(),
             #Add text based image edit (action module)
             STORYIMG=ActionInterpreter(),
