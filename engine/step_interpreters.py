@@ -6,7 +6,7 @@ import functools
 import numpy as np
 import face_detection
 import io, tokenize
-from augly.utils.base_paths import EMOJI_DIR
+# from augly.utils.base_paths import EMOJI_DIR
 import augly.image as imaugs
 from PIL import Image,ImageDraw,ImageFont,ImageFilter
 from transformers import (ViltProcessor, ViltForQuestionAnswering, 
@@ -17,7 +17,11 @@ from diffusers import StableDiffusionInpaintPipeline
 
 from .nms import nms
 from vis_utils import html_embed_image, html_colored_span, vis_masks, turboedit_img
+import gc
+gc.collect()
+torch.cuda.empty_cache()
 
+EMOJI_DIR="./visprog/emoji_data"
 
 def parse_step(step_str,partial=False):
     tokens = list(tokenize.generate_tokens(io.StringIO(step_str).readline))
@@ -70,9 +74,11 @@ class ActionInterpreter():
         image_var = parse_result['args']['image']
         src_prompt_var = eval(parse_result['args']['src_prompt'])
         target_prompt_var = eval(parse_result['args']['target_prompt'])
+        seed_var = eval(parse_result['args']['seed'])
+        w1_var = eval(parse_result['args']['w1'])
         output_var = parse_result['output_var']
         assert(step_name==self.step_name)
-        return image_var, src_prompt_var, target_prompt_var, output_var
+        return image_var, src_prompt_var, target_prompt_var, seed_var, w1_var, output_var
 
     def html(self, image, target_prompt, output_var, edited_img):
         step_name = html_step_name(self.step_name)
@@ -86,12 +92,12 @@ class ActionInterpreter():
         return f"""<div>{edited_img_str},"{target_prompt}"</div>"""
 
     def execute(self, prog_step, inspect=False):
-        image_var, src_prompt, target_prompt, output_var = self.parse(prog_step)
+        image_var, src_prompt, target_prompt, seed, w1, output_var = self.parse(prog_step)
         image = prog_step.state[image_var]
         # src_prompt = prog_step.state[src_prompt_var]
         # target_prompt = prog_step.state[target_prompt_var] 
-        edited_img = turboedit_img(image, src_prompt, target_prompt)
-        print(html_embed_image(edited_img))
+        edited_img = turboedit_img(image, src_prompt, target_prompt, seed, w1)
+        # print(html_embed_image(edited_img))
         prog_step.state[output_var] = edited_img
 
         if inspect:
@@ -1010,7 +1016,8 @@ class EmojiInterpreter():
 
     def add_emoji(self,objs,emoji_name,img):
         W,H = img.size
-        emojipth = os.path.join(EMOJI_DIR,f'smileys/{emoji_name}.png')
+        # emojipth = os.path.join(EMOJI_DIR,f'smileys/{emoji_name}.png')
+        emojipth = os.path.join(EMOJI_DIR,f'{emoji_name}.png')
         for obj in objs:
             x1,y1,x2,y2 = obj['box']
             cx = (x1+x2)/2
@@ -1018,7 +1025,7 @@ class EmojiInterpreter():
             s = (y2-y1)/1.5
             x_pos = (cx-0.5*s)/W
             y_pos = (cy-0.5*s)/H
-            emoji_size = s/H
+            emoji_size = s/H*0.6
             emoji_aug = imaugs.OverlayEmoji(
                 emoji_path=emojipth,
                 emoji_size=emoji_size,
@@ -1114,6 +1121,7 @@ List:"""
             return item_list, html_str
 
         return item_list
+        
 
 
 class ClassifyInterpreter():
@@ -1287,6 +1295,57 @@ class TagInterpreter():
             return img, html_str
 
         return img
+    
+class StoryTextInterpreter():
+    step_name = 'STORYTEXT'
+
+    def __init__(self):
+        print(f'Registering {self.step_name} step')
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+
+    def parse(self, prog_step):
+        parse_result = parse_step(prog_step.prog_str)
+        step_name = parse_result['step_name']
+        outline = eval(parse_result['args']['query'])
+        output_var = parse_result['output_var']
+        assert(step_name == self.step_name)
+        return outline, output_var
+
+    def get_story(self, outline):
+        print(outline)
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a helpful writer. Given the following story outline, create a short, concise story. The story should be a few sentences at most and maintain coherence and a clear narrative flow."},
+                {"role": "user", "content": str(outline)}
+            ],
+            temperature=0.7,
+            max_tokens=512,
+            top_p=0.5,
+            frequency_penalty=0,
+            presence_penalty=0,
+            n=1,
+            logprobs=True
+        )
+        print(response.choices[0])
+        story = response.choices[0]['message']['content'].strip()
+        return story
+
+    def html(self, outline, story, output_var):
+        step_name = html_step_name(self.step_name)
+        query_arg = html_arg_name('query')
+        output = html_output(story)
+        return f"""<div>{html_var_name(output_var)}={step_name}({query_arg}='{outline}')={output}</div>"""
+
+    def execute(self, prog_step, inspect=False):
+        outline, output_var = self.parse(prog_step)
+        story = self.get_story(outline)
+        prog_step.state[output_var] = story
+        if inspect:
+            html_str = self.html(outline, story, output_var)
+            return story, html_str
+
+        return story
 
 
 def dummy(images, **kwargs):
@@ -1298,11 +1357,13 @@ class ReplaceInterpreter():
     def __init__(self):
         print(f'Registering {self.step_name} step')
         device = "cuda"
-        model_name = "runwayml/stable-diffusion-inpainting"
+        # generator = torch.Generator("cuda").manual_seed(92)
+        model_name = "stabilityai/stable-diffusion-2-inpainting"
+        # model_name = "runwayml/stable-diffusion-inpainting"
         self.pipe = StableDiffusionInpaintPipeline.from_pretrained(
             model_name,
             revision="fp16",
-            torch_dtype=torch.float16)
+            torch_dtype=torch.float16,)
         self.pipe = self.pipe.to(device)
         self.pipe.safety_checker = dummy
 
@@ -1348,7 +1409,7 @@ class ReplaceInterpreter():
             mask_image=mask,
             # strength=0.98,
             guidance_scale=7.5,
-            num_inference_steps=50 #200
+            num_inference_steps=200 #200
         ).images[0]
         return new_img.crop((0,0,W-1,H-1)).resize(img.size)
 
@@ -1372,6 +1433,89 @@ class ReplaceInterpreter():
         prog_step.state[output_var] = new_img
         if inspect:
             html_str = self.html(img_var, obj_var, prompt, output_var, new_img)
+            return new_img, html_str
+        return new_img
+    
+class RemoveInterpreter():
+    step_name = 'REMOVE'
+
+    def __init__(self):
+        print(f'Registering {self.step_name} step')
+        device = "cuda"
+        model_name = "stabilityai/stable-diffusion-2-inpainting"
+        # model_name = "runwayml/stable-diffusion-inpainting:latest"
+        self.pipe = StableDiffusionInpaintPipeline.from_pretrained(
+            model_name,
+            revision="fp16",
+            torch_dtype=torch.float16,)
+        self.pipe = self.pipe.to(device)
+        self.pipe.safety_checker = dummy
+
+    def parse(self,prog_step):
+        parse_result = parse_step(prog_step.prog_str)
+        step_name = parse_result['step_name']
+        img_var = parse_result['args']['image']
+        obj_var = parse_result['args']['object']
+        output_var = parse_result['output_var']
+        assert(step_name==self.step_name)
+        return img_var,obj_var,output_var
+
+    def create_mask_img(self,objs):
+        mask = objs[0]['mask']
+        mask[mask>0.5] = 255
+        mask[mask<=0.5] = 0
+        mask = mask.astype(np.uint8)
+        return Image.fromarray(mask)
+
+    def merge_images(self,old_img,new_img,mask):
+        print(mask.size,old_img.size,new_img.size)
+
+        mask = np.array(mask).astype(np.float)/255
+        mask = np.tile(mask[:,:,np.newaxis],(1,1,3))
+        img = mask*np.array(new_img) + (1-mask)*np.array(old_img)
+        return Image.fromarray(img.astype(np.uint8))
+
+    def resize_and_pad(self,img,size=(512,512)):
+        new_img = Image.new(img.mode,size)
+        thumbnail = img.copy()
+        thumbnail.thumbnail(size)
+        new_img.paste(thumbnail,(0,0))
+        W,H = thumbnail.size
+        return new_img, W, H
+
+    def predict(self,img,mask):
+        prompt = "highly detailed empty background, realistic"
+        mask_img,_,_ = self.resize_and_pad(mask)
+        init_img,W,H = self.resize_and_pad(img)
+        new_img = self.pipe(
+            prompt=prompt,
+            image=init_img,
+            mask_image=mask,
+            # strength=0.98,
+            guidance_scale=7.5,
+            num_inference_steps=200 #200
+        ).images[0]
+        return new_img.crop((0,0,W-1,H-1)).resize(img.size)
+
+    def html(self,img_var,obj_var,output_var,output):
+        step_name = html_step_name(img_var)
+        img_var = html_var_name(img_var)
+        obj_var = html_var_name(obj_var)
+        output_var = html_var_name(output_var)
+        img_arg = html_arg_name('image')
+        obj_arg = html_arg_name('object')
+        output = html_embed_image(output,300)
+        return f"""{output_var}={step_name}({img_arg}={img_var},{obj_arg}={obj_var})={output}"""
+
+    def execute(self,prog_step,inspect=False):
+        img_var,obj_var,output_var = self.parse(prog_step)
+        img = prog_step.state[img_var]
+        objs = prog_step.state[obj_var]
+        mask = self.create_mask_img(objs)
+        new_img = self.predict(img, mask)
+        prog_step.state[output_var] = new_img
+        if inspect:
+            html_str = self.html(img_var, obj_var, output_var, new_img)
             return new_img, html_str
         return new_img
 
@@ -1414,15 +1558,17 @@ def register_step_interpreters(dataset='nlvr'):
         )
     elif dataset=='storygen':
         return dict(
-            # SEG=SegmentInterpreter(),
-            # SELECT=SelectInterpreter(),
+            SEG=SegmentInterpreter(),
+            SELECT=SelectInterpreter(),
+            REPLACE=ReplaceInterpreter(),
             # COLORPOP=ColorpopInterpreter(),
-            # BGBLUR=BgBlurInterpreter(),
-            # EMOJI=EmojiInterpreter(),
+            BGBLUR=BgBlurInterpreter(),
+            EMOJI=EmojiInterpreter(),
             RESULT=ResultInterpreter(),
             #Add text based image edit (action module)
             STORYIMG=ActionInterpreter(),
-            # STORYTEXT=StoryTextInterpreter(),
+            REMOVE=RemoveInterpreter(),
+            STORYTEXT=StoryTextInterpreter(),
         )
     elif dataset=='okDet':
         return dict(
