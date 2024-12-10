@@ -54,17 +54,16 @@ def vis_masks(img,objs,labels=None):
         imgs.append(obj_img)
 
     if labels is not None:
-        font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf', 60)
         for img,label in zip(imgs,labels):
             canvas = ImageDraw.Draw(img)
-            canvas.text((0,0),label,fill='white',font=font)
+            canvas.text((0,0),label,fill='white')
 
     cols=math.ceil(math.sqrt(len(imgs)))
     cols=min(3,len(imgs))
     rows=math.ceil(len(imgs)/3)
     return image_grid(imgs, rows, cols)
 
-def turboedit_img(image, src_prompt, target_prompt, seed=20, w1=1.5):
+def turboedit_img(image, src_prompt, target_prompt, seed=2, w1=1):
     client = Client("turboedit/turbo_edit")
     result = client.predict(
         input_image=handle_file(save_image_and_get_path(image)),
