@@ -21,7 +21,7 @@ import gc
 gc.collect()
 torch.cuda.empty_cache()
 
-EMOJI_DIR="./visprog/emoji_data"
+CHAR_DIR = "./visprog/characters"
 
 def parse_step(step_str,partial=False):
     tokens = list(tokenize.generate_tokens(io.StringIO(step_str).readline))
@@ -998,8 +998,8 @@ class FaceDetInterpreter():
         return objs
 
 
-class EmojiInterpreter():
-    step_name = 'EMOJI'
+class AddCharInterpreter():
+    step_name = 'ADD_CHAR'
 
     def __init__(self):
         print(f'Registering {self.step_name} step')
@@ -1009,15 +1009,14 @@ class EmojiInterpreter():
         step_name = parse_result['step_name']
         img_var = parse_result['args']['image']
         obj_var = parse_result['args']['object']
-        emoji_name = eval(parse_result['args']['emoji'])
+        char_name = eval(parse_result['args']['char'])
         output_var = parse_result['output_var']
         assert(step_name==self.step_name)
-        return img_var,obj_var,emoji_name,output_var
+        return img_var,obj_var,char_name,output_var
 
-    def add_emoji(self,objs,emoji_name,img):
+    def add_char(self,objs,char_name,img):
         W,H = img.size
-        # emojipth = os.path.join(EMOJI_DIR,f'smileys/{emoji_name}.png')
-        emojipth = os.path.join(EMOJI_DIR,f'{emoji_name}.png')
+        charpth = os.path.join(CHAR_DIR,f'{char_name}.png')
         for obj in objs:
             x1,y1,x2,y2 = obj['box']
             cx = (x1+x2)/2
@@ -1025,35 +1024,35 @@ class EmojiInterpreter():
             s = (y2-y1)/1.5
             x_pos = (cx-0.5*s)/W
             y_pos = (cy-0.5*s)/H
-            emoji_size = s/H*0.6
-            emoji_aug = imaugs.OverlayEmoji(
-                emoji_path=emojipth,
-                emoji_size=emoji_size,
+            char_size = s/H
+            char_aug = imaugs.OverlayEmoji(
+                char_path=charpth,
+                char_size=char_size,
                 x_pos=x_pos,
                 y_pos=y_pos)
-            img = emoji_aug(img)
+            img = char_aug(img)
 
         return img
 
-    def html(self,img_var,obj_var,emoji_name,output_var,img):
+    def html(self,img_var,obj_var,char_name,output_var,img):
         step_name = html_step_name(self.step_name)
         image_arg = html_arg_name('image')
         obj_arg = html_arg_name('object')
-        emoji_arg = html_arg_name('emoji')
+        char_arg = html_arg_name('char')
         image_var = html_var_name(img_var)
         obj_var = html_var_name(obj_var)
         output_var = html_var_name(output_var)
         img = html_embed_image(img,300)
-        return f"""<div>{output_var}={step_name}({image_arg}={image_var},{obj_arg}={obj_var},{emoji_arg}='{emoji_name}')={img}</div>"""
+        return f"""<div>{output_var}={step_name}({image_arg}={image_var},{obj_arg}={obj_var},{char_arg}='{char_name}')={img}</div>"""
 
     def execute(self,prog_step,inspect=False):
-        img_var,obj_var,emoji_name,output_var = self.parse(prog_step)
+        img_var,obj_var,char_name,output_var = self.parse(prog_step)
         img = prog_step.state[img_var]
         objs = prog_step.state[obj_var]
-        img = self.add_emoji(objs, emoji_name, img)
+        img = self.add_char(objs, char_name, img)
         prog_step.state[output_var] = img
         if inspect:
-            html_str = self.html(img_var, obj_var, emoji_name, output_var, img)
+            html_str = self.html(img_var, obj_var, char_name, output_var, img)
             return img, html_str
 
         return img
@@ -1553,7 +1552,7 @@ def register_step_interpreters(dataset='nlvr'):
             COLORPOP=ColorpopInterpreter(),
             BGBLUR=BgBlurInterpreter(),
             REPLACE=ReplaceInterpreter(),
-            EMOJI=EmojiInterpreter(),
+            ADDCHAR=AddCharInterpreter(),
             RESULT=ResultInterpreter()
         )
     elif dataset=='storygen':
@@ -1563,7 +1562,7 @@ def register_step_interpreters(dataset='nlvr'):
             REPLACE=ReplaceInterpreter(),
             # COLORPOP=ColorpopInterpreter(),
             BGBLUR=BgBlurInterpreter(),
-            EMOJI=EmojiInterpreter(),
+            ADDCHAR=AddCharInterpreter(),
             RESULT=ResultInterpreter(),
             #Add text based image edit (action module)
             STORYIMG=ActionInterpreter(),
