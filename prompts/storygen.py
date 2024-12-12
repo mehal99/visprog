@@ -1,20 +1,49 @@
 PROMPT = """Think step by step to carry out the instruction.
 
-Instruction: Visualize this story: Fred lays in a hammock in the yard. Fred is laying outside in a hammock. Something moves past Fred. Fred sits on a hammock in the yard. Fred is outside sitting in a hammock.
+Instruction: Visualize this story: Fred, Jenny, and Pebbles are sitting in the woods. Fred is daydreaming about curry rice. Jenny brings out delicious food and they are eating. A raven stoops down for the food. Fred, Jenny, and Pebbles run away. 
 Program:
-IMAGE0=STORYIMG(image=IMAGE, src_prompt='Fred lays in a hammock in the yard', target_prompt='Fred is laying outside in a hammock', seed = 200, w1 = 1.5)
-IMAGE1 = STORYIMG(image=IMAGE0, src_prompt='Fred is laying outside in a hammock', target_prompt='Something moves past Fred', seed = 200, w1 = 1.5)
-IMAGE2 = STORYIMG(image=IMAGE1, src_prompt='Something moves past Fred', target_prompt='Fred sits on a hammock in the yard', seed = 200, w1 = 1.5)
-IMAGE3 = STORYIMG(image=IMAGE2, src_prompt='Fred sits on a hammock in the yard', target_prompt='Fred is outside in a hammock', seed = 200, w1 = 1.5)
-FINAL_RESULT=RESULT(var=[IMAGE0, IMAGE1, IMAGE2, IMAGE3])
+OBJ0=SEG(image=IMAGE)
+OBJ1=SELECT(image=IMAGE,object=OBJ0,query='man on the left',category=None)
+IMAGE0=BGBLUR(image=IMAGE, object=OBJ1)
+IMAGE1=ADDCHAR(image=IMAGE0,object=OBJ1,char='cloud')
+OBJ2=SEG(image=IMAGE1)
+OBJ3=SELECT(image=IMAGE1,object=OBJ2, query='cloud',category=None)
+IMAGE2=ADDCHAR(image=IMAGE1,object=OBJ3,char='curry_rice')
+IMAGE3=IMGEDIT(image=IMAGE, src_prompt='Fred, jenny and the baby are talking in the woods', target_prompt='Fred, jenny and the baby are eating in the woods', seed = 7, w1 = 1)
+IMAGE4=IMGEDIT(image=IMAGE3, src_prompt='Fred, jenny and the baby are eating in the woods', target_prompt='Fred, jenny and the baby getting attacked by scary crows in the woods', seed = 2, w1 = 1)
+IMAGE5=IMGEDIT(image=IMAGE4, src_prompt='Fred, jenny and the baby getting attacked by scary crows in the woods', target_prompt='Fred, jenny and the baby are running away from the crows in the woods', seed = 12397, w1 = 1.2)
+STORY = STORYTEXT(story_text="Fred, Jenny, and baby Pebbles are sitting in the woods. Fred is daydreaming about curry rice. Jenny brings out delicious food and they are eating. A raven stoops down for the food. Fred, Jenny and baby run Pebbles away.")
+STORY_TEXT_RESULT = RESULT(var=STORY)
+FINAL_RESULT=RESULT(var=[IMAGE, IMAGE1, IMAGE2, IMAGE3, IMAGE4, IMAGE5, STORY_TEXT_RESULT])
 
-Instruction: Visualize this story: man wearing purple plays an instrument next to a microphone on a stage. man with violet dress wearing glasses talks into a microphone on stage. man with violet dress wearing glasses looks away from the microphone on stage. man with violet dress wearing glasses is talking without microphone. He is speaking to someone on the phone while wearing a purple hat.
+
+Instruction: Visualize this story: Barney comes out from the cave hut. He sees a bear and runs away.
 Program:
-IMAGE0=STORYIMG(image=IMAGE, src_prompt='man wearing purple plays an instrument next to a microphone on a stage', target_prompt='man with violet dress wearing glasses talks into a microphone on stage.', seed = 200, w1 = 1.5)
-IMAGE1 = STORYIMG(image=IMAGE0, src_prompt='man with violet dress wearing glasses talks into a microphone on stage.', target_prompt='man with violet dress wearing glasses looks away from the microphone on stage.', seed = 200, w1 = 1.5)
-IMAGE2 = STORYIMG(image=IMAGE1, src_prompt='man with violet dress wearing glasses looks away from the microphone on stage.', target_prompt='man with violet dress wearing glasses is talking without microphone.', seed = 200, w1 = 1.5)
-IMAGE3 = STORYIMG(image=IMAGE2, src_prompt='man with violet dress wearing glasses is talking without microphone.', target_prompt='He is speaking to someone on the phone while wearing a purple hat.', seed = 200, w1 = 1.5)
-FINAL_RESULT=RESULT(var=[IMAGE0, IMAGE1, IMAGE2, IMAGE3])
+OBJ0=SEG(image=IMAGE)
+OBJ1=SELECT(image=IMAGE,object=OBJ0,query='cave hut entry',category=None)
+IMAGE1=ADDCHAR(image=IMAGE1,object=OBJ1,char='barney')
+IMAGE2=IMGEDIT(image=IMAGE, src_prompt='Barney is outside the cave', target_prompt='Barney and bear are outside the cave', seed = 7, w1 = 1)
+IMAGE3=IMGEDIT(image=IMAGE, src_prompt='Barney is standing outside the cave', target_prompt='Barney is running outside the cave', seed = 7, w1 = 1)
+OBJ2=SEG(image=IMAGE3)
+OBJ3=SELECT(image=IMAGE3,object=OBJ2,query='Barney man character',category=None)
+IMAGE4=REMOVE(image=IMAGE3, object=OBJ3)
+STORY = STORYTEXT(story_text="Barney comes out from the cave hut. He sees a bear and runs away.")
+STORY_TEXT_RESULT = RESULT(var=STORY)
+FINAL_RESULT=RESULT(var=[IMAGE, IMAGE1, IMAGE2, IMAGE3, IMAGE4, STORY_TEXT_RESULT])
+
+
+Instruction: Visualize this story: Pebbles is sitting in a baby chair and looking at her dinosaur toy. She tries to reach out to the toy but falls down. Wilma comes worried and picks her up.
+Program:
+IMAGE1=IMGEDIT(image=IMAGE, src_prompt='Pebbles is sitting in a baby chair', target_prompt='Pebbles is stretching out from her baby chair', seed = 7, w1 = 1)
+IMAGE2=IMGEDIT(image=IMAGE1, src_prompt='Pebbles is stretching out from her baby chair', target_prompt='Pebbles is falling down from her baby chair', seed = 7, w1 = 1)
+OBJ0=SEG(image=IMAGE2)
+OBJ1=SELECT(image=IMAGE2,object=OBJ0,query='dinosaur toy',category=None)
+IMAGE0=ADDCHAR(image=IMAGE2,object=OBJ1,char='wilma')
+IMAGE4=IMGEDIT(image=IMAGE, src_prompt='Wilma is smiling', target_prompt='Wilma is worried', seed = 7, w1 = 1)
+IMAGE5=IMGEDIT(image=IMAGE4, src_prompt='Wilma is worried', target_prompt='Wilma is picking up baby', seed = 7, w1 = 1)
+STORY = STORYTEXT(story_text="Pebbles is sitting in a baby chair and looking at her dinosaur toy. She tries to reach out to the toy but falls down. Wilma comes worried and picks her up.")
+STORY_TEXT_RESULT = RESULT(var=STORY)
+FINAL_RESULT=RESULT(var=[IMAGE, IMAGE1, IMAGE2, IMAGE4, IMAGE5, STORY_TEXT_RESULT])
 
 Instruction: Visualize this story: 
 
