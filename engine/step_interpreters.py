@@ -62,8 +62,8 @@ def html_arg_name(content):
     return f'<b>{arg_name}</b>'
 
 
-class ActionInterpreter():
-    step_name = 'STORYIMG'
+class ImageEditInterpreter():
+    step_name = 'IMGEDIT'
 
     def __init__(self):
         print(f'Registering {self.step_name} step')
@@ -86,7 +86,6 @@ class ActionInterpreter():
         edited_img_str = html_embed_image(edited_img)
         output_var = html_var_name(output_var)
         src_image_arg = html_arg_name('image')
-        # src_prompt_arg = html_arg_name('src_prompt')
         target_prompt_arg = html_arg_name('target_prompt')
 
         return f"""<div>{edited_img_str},"{target_prompt}"</div>"""
@@ -94,8 +93,7 @@ class ActionInterpreter():
     def execute(self, prog_step, inspect=False):
         image_var, src_prompt, target_prompt, seed, w1, output_var = self.parse(prog_step)
         image = prog_step.state[image_var]
-        # src_prompt = prog_step.state[src_prompt_var]
-        # target_prompt = prog_step.state[target_prompt_var] 
+        # We use TurboEdit Prompt Based Image Manipulation
         edited_img = turboedit_img(image, src_prompt, target_prompt, seed, w1)
         # print(html_embed_image(edited_img))
         prog_step.state[output_var] = edited_img
@@ -1557,17 +1555,21 @@ def register_step_interpreters(dataset='nlvr'):
         )
     elif dataset=='storygen':
         return dict(
+            # VisProg's existing Image Editing Modules
             SEG=SegmentInterpreter(),
             SELECT=SelectInterpreter(),
             REPLACE=ReplaceInterpreter(),
-            # COLORPOP=ColorpopInterpreter(),
+            COLORPOP=ColorpopInterpreter(),
             BGBLUR=BgBlurInterpreter(),
+            # New Module: Add a character to the visual story
             ADDCHAR=AddCharInterpreter(),
-            RESULT=ResultInterpreter(),
-            #Add text based image edit (action module)
-            STORYIMG=ActionInterpreter(),
+            # New Module: Prompt-based image editing to make character perform an action or add a random object
+            IMGEDIT=ImageEditInterpreter(),
+            # New Module: Remove an object from the visual story
             REMOVE=RemoveInterpreter(),
+            # New Module: Generate a story from a given outline
             STORYTEXT=StoryTextInterpreter(),
+            RESULT=ResultInterpreter()
         )
     elif dataset=='okDet':
         return dict(

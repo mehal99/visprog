@@ -16,6 +16,8 @@ IMAGE2 = STORYIMG(image=IMAGE1, src_prompt='man with violet dress wearing glasse
 IMAGE3 = STORYIMG(image=IMAGE2, src_prompt='man with violet dress wearing glasses is talking without microphone.', target_prompt='He is speaking to someone on the phone while wearing a purple hat.', seed = 200, w1 = 1.5)
 FINAL_RESULT=RESULT(var=[IMAGE0, IMAGE1, IMAGE2, IMAGE3])
 
+Instruction: Visualize this story: 
+
 Instruction: {instruction}
 Program:
 """
