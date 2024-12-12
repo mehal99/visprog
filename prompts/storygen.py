@@ -45,7 +45,19 @@ STORY = STORYTEXT(query="Pebbles is sitting in a baby chair and looking at her d
 STORY_TEXT_RESULT = RESULT(var=STORY)
 FINAL_RESULT=RESULT(var=IMAGE5)
 
-Instruction: Visualize this story: 
+Instruction: Visualize this story: Pororo and his friends are dancing with a fairy in a rose garden. The fairy sprinkles magic dust on the roses and many butterflies appear. 
+Program:
+IMAGE1=IMGEDIT(image=IMAGE, src_prompt='Fairy is dancing', target_prompt='Fairy does magic', seed = 7, w1 = 1)
+OBJ0=SEG(image=IMAGE1)
+OBJ1=SELECT(image=IMAGE1,object=OBJ0,query='background',category=None)
+IMAGE2=BGBLUR(image=IMAGE1, object=OBJ1)
+IMAGE3=REPLACE(image=IMAGE1,object=OBJ1,prompt='magic dust')
+OBJ2=SEG(image=IMAGE3)
+OBJ1=SELECT(image=IMAGE3,object=OBJ2,query='roses',category=None)
+IMAGE4=REPLACE(image=IMAGE3,object=OBJ1,prompt='butterflies')
+STORY = STORYTEXT(query="Pororo and his friends are dancing with a fairy in a rose garden. The fairy sprinkles magic dust on the roses and many butterflies appear.")
+STORY_TEXT_RESULT = RESULT(var=STORY)
+FINAL_RESULT=RESULT(var=IMAGE4)
 
 Instruction: {instruction}
 Program:
