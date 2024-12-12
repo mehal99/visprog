@@ -49,7 +49,7 @@ OBJ1=SELECT(image=IMAGE1,object=OBJ0,query='background',category=None)
 IMAGE2=BGBLUR(image=IMAGE1, object=OBJ1)
 IMAGE3=REPLACE(image=IMAGE1,object=OBJ1,prompt='magic dust')
 OBJ2=SEG(image=IMAGE3)
-OBJ1=SELECT(image=IMAGE3,object=OBJ2,query='roses',category=None)
+OBJ1=SELECT(image=IMAGE3,object=OBJ2,query='flowers',category=None)
 IMAGE4=REPLACE(image=IMAGE3,object=OBJ1,prompt='butterflies')
 STORY = STORYTEXT(query="Pororo and his friends are dancing with a fairy in a rose garden. The fairy sprinkles magic dust on the roses and many butterflies appear.")
 STORY_TEXT_RESULT=RESULT(var=STORY)
@@ -65,9 +65,16 @@ STORY = STORYTEXT(query="Pororo and friends are dancing in the snow. Petty comes
 STORY_TEXT_RESULT=RESULT(var=STORY)
 FINAL_RESULT=RESULT(var=IMAGE2)
 
-Instruction: Visualize this story: 
+Instruction: Visualize this story: Wilma, Barney and Betty are preparing for Fred's birthday. Wilma puts candles on the cake. Fred enters the room. He blows the candles.
 Program:
-
+IMAGE1=IMGEDIT(image=IMAGE, src_prompt='Everyone is around the cake', target_prompt='Everyone is around the cake with candles', seed = 7, w1 = 1)
+OBJ0=SEG(image=IMAGE1)
+OBJ1=SELECT(image=IMAGE1,object=OBJ0,query='cake',category=None)
+IMAGE2=ADDCHAR(image=IMAGE1,object=OBJ1,char='fred')
+IMAGE3=IMGEDIT(image=IMAGE, src_prompt='Fred enters the room', target_prompt='Fred is blowing the candles', seed = 7, w1 = 1)
+STORY = STORYTEXT(query="Wilma, Barney and Betty are preparing for Fred's birthday. Wilma puts candles on the cake. Fred enters the room. He blows the candles.")
+STORY_TEXT_RESULT=RESULT(var=STORY)
+FINAL_RESULT=RESULT(var=IMAGE3)
 
 Instruction: {instruction}
 Program:
