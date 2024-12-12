@@ -1025,7 +1025,7 @@ class EmojiInterpreter():
             s = (y2-y1)/1.5
             x_pos = (cx-0.5*s)/W
             y_pos = (cy-0.5*s)/H
-            emoji_size = s/H*0.6
+            emoji_size = (s/H)*0.6
             emoji_aug = imaugs.OverlayEmoji(
                 emoji_path=emojipth,
                 emoji_size=emoji_size,
