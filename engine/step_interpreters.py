@@ -16,7 +16,7 @@ from transformers import (ViltProcessor, ViltForQuestionAnswering,
 from diffusers import StableDiffusionInpaintPipeline
 
 from .nms import nms
-from vis_utils import html_embed_image, html_colored_span, vis_masks, turboedit_img
+from vis_utils import html_embed_image, html_colored_span, vis_masks, turboedit_img, remove_obj_from_img
 import gc
 gc.collect()
 torch.cuda.empty_cache()
@@ -1021,8 +1021,8 @@ class AddCharInterpreter():
             cy = (y1+y2)/2
             s = (y2-y1)/1.5
             x_pos = (cx-0.5*s)/W
-            y_pos = ((cy-0.5*s)/H)
-            char_size = (s/H)*0.6
+            y_pos = (cy-0.5*s)/H
+            char_size = s/H
             char_aug = imaugs.OverlayEmoji(
                 emoji_path=charpth,
                 emoji_size=char_size,
@@ -1437,83 +1437,34 @@ class RemoveInterpreter():
 
     def __init__(self):
         print(f'Registering {self.step_name} step')
-        device = "cuda"
-        model_name = "stabilityai/stable-diffusion-2-inpainting"
-        # model_name = "runwayml/stable-diffusion-inpainting:latest"
-        self.pipe = StableDiffusionInpaintPipeline.from_pretrained(
-            model_name,
-            revision="fp16",
-            torch_dtype=torch.float16,)
-        self.pipe = self.pipe.to(device)
-        self.pipe.safety_checker = dummy
 
     def parse(self,prog_step):
         parse_result = parse_step(prog_step.prog_str)
         step_name = parse_result['step_name']
         img_var = parse_result['args']['image']
-        obj_var = parse_result['args']['object']
+        obj_var = eval(parse_result['args']['object'])
         output_var = parse_result['output_var']
         assert(step_name==self.step_name)
         return img_var,obj_var,output_var
 
-    def create_mask_img(self,objs):
-        mask = objs[0]['mask']
-        mask[mask>0.5] = 255
-        mask[mask<=0.5] = 0
-        mask = mask.astype(np.uint8)
-        return Image.fromarray(mask)
-
-    def merge_images(self,old_img,new_img,mask):
-        print(mask.size,old_img.size,new_img.size)
-
-        mask = np.array(mask).astype(np.float)/255
-        mask = np.tile(mask[:,:,np.newaxis],(1,1,3))
-        img = mask*np.array(new_img) + (1-mask)*np.array(old_img)
-        return Image.fromarray(img.astype(np.uint8))
-
-    def resize_and_pad(self,img,size=(512,512)):
-        new_img = Image.new(img.mode,size)
-        thumbnail = img.copy()
-        thumbnail.thumbnail(size)
-        new_img.paste(thumbnail,(0,0))
-        W,H = thumbnail.size
-        return new_img, W, H
-
-    def predict(self,img,mask):
-        prompt = "highly detailed empty background, realistic"
-        mask_img,_,_ = self.resize_and_pad(mask)
-        init_img,W,H = self.resize_and_pad(img)
-        new_img = self.pipe(
-            prompt=prompt,
-            image=init_img,
-            mask_image=mask,
-            # strength=0.98,
-            guidance_scale=7.5,
-            num_inference_steps=200 #200
-        ).images[0]
-        return new_img.crop((0,0,W-1,H-1)).resize(img.size)
-
-    def html(self,img_var,obj_var,output_var,output):
-        step_name = html_step_name(img_var)
+    def html(self,img_var,obj,output_var,edited_img):
+        step_name = html_step_name(self.step_name)
         img_var = html_var_name(img_var)
-        obj_var = html_var_name(obj_var)
         output_var = html_var_name(output_var)
         img_arg = html_arg_name('image')
         obj_arg = html_arg_name('object')
-        output = html_embed_image(output,300)
-        return f"""{output_var}={step_name}({img_arg}={img_var},{obj_arg}={obj_var})={output}"""
+        edited_img_str = html_embed_image(edited_img)
+        return f"""{output_var}={step_name}({img_arg}={img_var},{obj_arg}={obj})={edited_img_str}"""
 
     def execute(self,prog_step,inspect=False):
-        img_var,obj_var,output_var = self.parse(prog_step)
+        img_var,obj,output_var = self.parse(prog_step)
         img = prog_step.state[img_var]
-        objs = prog_step.state[obj_var]
-        mask = self.create_mask_img(objs)
-        new_img = self.predict(img, mask)
-        prog_step.state[output_var] = new_img
+        edited_img = remove_obj_from_img(img, obj)
+        prog_step.state[output_var] = edited_img
         if inspect:
-            html_str = self.html(img_var, obj_var, output_var, new_img)
-            return new_img, html_str
-        return new_img
+            html_str = self.html(img, obj, output_var, edited_img)
+            return edited_img, html_str
+        return edited_img
 
 
 def register_step_interpreters(dataset='nlvr'):

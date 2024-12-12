@@ -76,8 +76,20 @@ def turboedit_img(image, src_prompt, target_prompt, seed=2, w1=1):
     with Image.open(result) as img:
         print(img)
         return img
-
-    # return result
+    
+def remove_obj_from_img(image, prompt):
+    client = Client("https://abyildirim-inst-inpaint.hf.space/")
+    remove_str="Remove the "
+    result = client.predict(
+                    save_image_and_get_path(image),
+                    remove_str+prompt,	
+                    False,	#
+                    api_name="/predict"
+    )
+    print(result[1])
+    with Image.open(result[1]) as img:
+        img.save("processed_image.png")
+        return img
 
 def save_image_and_get_path(image, save_path="output_image.png"):
     if image is None:
