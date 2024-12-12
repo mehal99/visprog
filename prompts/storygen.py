@@ -16,7 +16,6 @@ STORY = STORYTEXT(query="Fred, Jenny, and baby Pebbles are sitting in the woods.
 STORY_TEXT_RESULT = RESULT(var=STORY)
 FINAL_RESULT=RESULT(var=IMAGE5)
 
-
 Instruction: Visualize this story: Barney comes out from the cave hut. He sees a bear and runs away.
 Program:
 OBJ0=SEG(image=IMAGE)
@@ -30,7 +29,6 @@ IMAGE4=REMOVE(image=IMAGE3, object=OBJ3)
 STORY = STORYTEXT(query="Barney comes out from the cave hut. He sees a bear and runs away.")
 STORY_TEXT_RESULT = RESULT(var=STORY)
 FINAL_RESULT=RESULT(var=IMAGE4)
-
 
 Instruction: Visualize this story: Pebbles is sitting in a baby chair and looking at her dinosaur toy. She tries to reach out to the toy but falls down. Wilma comes worried and picks her up.
 Program:
@@ -58,6 +56,19 @@ IMAGE4=REPLACE(image=IMAGE3,object=OBJ1,prompt='butterflies')
 STORY = STORYTEXT(query="Pororo and his friends are dancing with a fairy in a rose garden. The fairy sprinkles magic dust on the roses and many butterflies appear.")
 STORY_TEXT_RESULT = RESULT(var=STORY)
 FINAL_RESULT=RESULT(var=IMAGE4)
+
+Instruction: Visualize this story: Pororo and friends are dancing in the snow. Petty comes and joins them. They all make a snowman.
+Program:
+OBJ0=SEG(image=IMAGE)
+OBJ1=SELECT(image=IMAGE,object=OBJ0,query='snow',category=None)
+IMAGE1=ADDCHAR(image=IMAGE,object=OBJ1,char='petty')
+IMAGE2=IMGEDIT(image=IMAGE, src_prompt='Pororo and friends are dancing in the snow', target_prompt='Pororo and friends are making a snowman', seed = 7, w1 = 1)
+STORY = STORYTEXT(query="Pororo and friends are dancing in the snow. Petty comes and joins them. They all make a snowman.")
+STORY_TEXT_RESULT = RESULT(var=STORY)
+FINAL_RESULT=RESULT(var=IMAGE2)
+
+Instruction: Visualize this story: A dinosaur is chasing Pororo. His friends are standing behind worried.
+Program:
 
 Instruction: {instruction}
 Program:
