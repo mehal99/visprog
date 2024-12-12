@@ -12,9 +12,9 @@ IMAGE2=ADDCHAR(image=IMAGE1,object=OBJ3,char='curry_rice')
 IMAGE3=IMGEDIT(image=IMAGE, src_prompt='Fred, jenny and the baby are talking in the woods', target_prompt='Fred, jenny and the baby are eating in the woods', seed = 7, w1 = 1)
 IMAGE4=IMGEDIT(image=IMAGE3, src_prompt='Fred, jenny and the baby are eating in the woods', target_prompt='Fred, jenny and the baby getting attacked by scary crows in the woods', seed = 2, w1 = 1)
 IMAGE5=IMGEDIT(image=IMAGE4, src_prompt='Fred, jenny and the baby getting attacked by scary crows in the woods', target_prompt='Fred, jenny and the baby are running away from the crows in the woods', seed = 12397, w1 = 1.2)
-STORY = STORYTEXT(story_text="Fred, Jenny, and baby Pebbles are sitting in the woods. Fred is daydreaming about curry rice. Jenny brings out delicious food and they are eating. A raven stoops down for the food. Fred, Jenny and baby run Pebbles away.")
+STORY = STORYTEXT(query="Fred, Jenny, and baby Pebbles are sitting in the woods. Fred is daydreaming about curry rice. Jenny brings out delicious food and they are eating. A raven stoops down for the food. Fred, Jenny and baby run Pebbles away.")
 STORY_TEXT_RESULT = RESULT(var=STORY)
-FINAL_RESULT=RESULT(var=[IMAGE, IMAGE1, IMAGE2, IMAGE3, IMAGE4, IMAGE5, STORY_TEXT_RESULT])
+FINAL_RESULT=RESULT(var=IMAGE5)
 
 
 Instruction: Visualize this story: Barney comes out from the cave hut. He sees a bear and runs away.
@@ -27,9 +27,9 @@ IMAGE3=IMGEDIT(image=IMAGE, src_prompt='Barney is standing outside the cave', ta
 OBJ2=SEG(image=IMAGE3)
 OBJ3=SELECT(image=IMAGE3,object=OBJ2,query='Barney man character',category=None)
 IMAGE4=REMOVE(image=IMAGE3, object=OBJ3)
-STORY = STORYTEXT(story_text="Barney comes out from the cave hut. He sees a bear and runs away.")
+STORY = STORYTEXT(query="Barney comes out from the cave hut. He sees a bear and runs away.")
 STORY_TEXT_RESULT = RESULT(var=STORY)
-FINAL_RESULT=RESULT(var=[IMAGE, IMAGE1, IMAGE2, IMAGE3, IMAGE4, STORY_TEXT_RESULT])
+FINAL_RESULT=RESULT(var=IMAGE4)
 
 
 Instruction: Visualize this story: Pebbles is sitting in a baby chair and looking at her dinosaur toy. She tries to reach out to the toy but falls down. Wilma comes worried and picks her up.
@@ -41,9 +41,9 @@ OBJ1=SELECT(image=IMAGE2,object=OBJ0,query='dinosaur toy',category=None)
 IMAGE0=ADDCHAR(image=IMAGE2,object=OBJ1,char='wilma')
 IMAGE4=IMGEDIT(image=IMAGE, src_prompt='Wilma is smiling', target_prompt='Wilma is worried', seed = 7, w1 = 1)
 IMAGE5=IMGEDIT(image=IMAGE4, src_prompt='Wilma is worried', target_prompt='Wilma is picking up baby', seed = 7, w1 = 1)
-STORY = STORYTEXT(story_text="Pebbles is sitting in a baby chair and looking at her dinosaur toy. She tries to reach out to the toy but falls down. Wilma comes worried and picks her up.")
+STORY = STORYTEXT(query="Pebbles is sitting in a baby chair and looking at her dinosaur toy. She tries to reach out to the toy but falls down. Wilma comes worried and picks her up.")
 STORY_TEXT_RESULT = RESULT(var=STORY)
-FINAL_RESULT=RESULT(var=[IMAGE, IMAGE1, IMAGE2, IMAGE4, IMAGE5, STORY_TEXT_RESULT])
+FINAL_RESULT=RESULT(var=IMAGE5)
 
 Instruction: Visualize this story: 
 

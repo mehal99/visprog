@@ -21,7 +21,7 @@ import gc
 gc.collect()
 torch.cuda.empty_cache()
 
-CHAR_DIR = "./visprog/characters"
+CHAR_DIR = "C:/Users/mehal/Downloads/genaiproject/visprog/characters"
 
 def parse_step(step_str,partial=False):
     tokens = list(tokenize.generate_tokens(io.StringIO(step_str).readline))
@@ -997,7 +997,7 @@ class FaceDetInterpreter():
 
 
 class AddCharInterpreter():
-    step_name = 'ADD_CHAR'
+    step_name = 'ADDCHAR'
 
     def __init__(self):
         print(f'Registering {self.step_name} step')
@@ -1021,11 +1021,11 @@ class AddCharInterpreter():
             cy = (y1+y2)/2
             s = (y2-y1)/1.5
             x_pos = (cx-0.5*s)/W
-            y_pos = (cy-0.5*s)/H
-            char_size = s/H
+            y_pos = ((cy-0.5*s)/H)
+            char_size = (s/H)*0.6
             char_aug = imaugs.OverlayEmoji(
-                char_path=charpth,
-                char_size=char_size,
+                emoji_path=charpth,
+                emoji_size=char_size,
                 x_pos=x_pos,
                 y_pos=y_pos)
             img = char_aug(img)
@@ -1324,7 +1324,6 @@ class StoryTextInterpreter():
             n=1,
             logprobs=True
         )
-        print(response.choices[0])
         story = response.choices[0]['message']['content'].strip()
         return story
 
