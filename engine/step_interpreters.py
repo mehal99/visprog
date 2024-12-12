@@ -14,7 +14,7 @@ from transformers import (ViltProcessor, ViltForQuestionAnswering,
     MaskFormerFeatureExtractor, MaskFormerForInstanceSegmentation,
     CLIPProcessor, CLIPModel, AutoProcessor, BlipForQuestionAnswering)
 from diffusers import StableDiffusionInpaintPipeline
-
+from segment_anything import SamPredictor, sam_model_registry
 from .nms import nms
 from vis_utils import html_embed_image, html_colored_span, vis_masks, turboedit_img, remove_obj_from_img
 import gc
@@ -632,11 +632,12 @@ class SegmentInterpreter():
     def __init__(self):
         print(f'Registering {self.step_name} step')
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.feature_extractor = MaskFormerFeatureExtractor.from_pretrained(
-            "facebook/maskformer-swin-base-coco")
-        self.model = MaskFormerForInstanceSegmentation.from_pretrained(
-            "facebook/maskformer-swin-base-coco").to(self.device)
-        self.model.eval()
+        # Load SAM model and predictor
+        model_type = "vit_h"  # Change this based on the model variant
+        checkpoint_path = "sam_vit_h_4b8939.pth"  # Provide the correct checkpoint path
+        self.model = sam_model_registry[model_type](checkpoint=checkpoint_path)
+        self.model.to(self.device)
+        self.predictor = SamPredictor(self.model)
 
     def parse(self,prog_step):
         parse_result = parse_step(prog_step.prog_str)
@@ -647,19 +648,19 @@ class SegmentInterpreter():
         return img_var,output_var
 
     def pred_seg(self,img):
-        inputs = self.feature_extractor(images=img, return_tensors="pt")
-        inputs = {k:v.to(self.device) for k,v in inputs.items()}
-        with torch.no_grad():
-            outputs = self.model(**inputs)
-        outputs = self.feature_extractor.post_process_panoptic_segmentation(outputs)[0]
-        instance_map = outputs['segmentation'].cpu().numpy()
+        # Convert PIL image to numpy array for SAM
+        img_np = np.array(img)
+        self.predictor.set_image(img_np)
+
+        # Use SAM for automatic segmentation
+        masks, _, _ = self.predictor.predict(
+            point_coords=None,  # No prompts for automatic segmentation
+            point_labels=None,
+            multimask_output=True
+        )
+
         objs = []
-        print(outputs.keys())
-        for seg in outputs['segments_info']:
-            inst_id = seg['id']
-            label_id = seg['label_id']
-            category = self.model.config.id2label[label_id]
-            mask = (instance_map==inst_id).astype(float)
+        for mask in masks:
             resized_mask = np.array(
                 Image.fromarray(mask).resize(
                     img.size,resample=Image.BILINEAR))
@@ -669,9 +670,9 @@ class SegmentInterpreter():
             num_pixels = np.sum(mask)
             objs.append(dict(
                 mask=resized_mask,
-                category=category,
+                category="unknown",
                 box=[x1,y1,x2,y2],
-                inst_id=inst_id
+                inst_id=len(objs)+1
             ))
 
         return objs
@@ -685,18 +686,17 @@ class SegmentInterpreter():
         return f"""<div>{output_var}={step_name}({img_arg}={img_var})={output}</div>"""
 
     def execute(self,prog_step,inspect=False):
-        img_var,output_var = self.parse(prog_step)
+        img_var, output_var = self.parse(prog_step)
         img = prog_step.state[img_var]
         objs = self.pred_seg(img)
         prog_step.state[output_var] = objs
         if inspect:
-            labels = [str(obj['inst_id'])+':'+obj['category'] for obj in objs]
+            labels = [str(obj['inst_id'])+':unknown' for obj in objs]
             obj_img = vis_masks(img, objs, labels)
             html_str = self.html(img_var, output_var, obj_img)
             return objs, html_str
 
         return objs
-
 
 class SelectInterpreter():
     step_name = 'SELECT'
