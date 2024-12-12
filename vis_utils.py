@@ -83,11 +83,11 @@ def remove_obj_from_img(image, prompt):
     result = client.predict(
                     save_image_and_get_path(image),
                     remove_str+prompt,	
-                    False,	#
+                    False,
                     api_name="/predict"
     )
-    print(result[1])
     with Image.open(result[1]) as img:
+        print(img)
         img.save("processed_image.png")
         return img
 
