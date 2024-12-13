@@ -108,7 +108,7 @@ It is possible that the instruction you provide is not solved correctly by VisPr
 - You can now play with examples from this dataset using a notebook similar to those in the `notebooks/` folder or create a python script to run inference on a large number of examples.
 
 # Workflow
-![assets/modules.png](assets/modules.png)
+![workflow.png](workflow.png)
 
 
 # Citation
