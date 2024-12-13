@@ -1,40 +1,76 @@
+import os
+import sys
+module_path = os.path.abspath(os.path.join('..'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
 import torch
-import torchvision.transforms as transforms
-from torchvision.datasets import ImageFolder
-from torchvision.utils import save_image
-from torch.utils.data import DataLoader
-from torch_fidelity import calculate_metrics
+from torchvision import transforms
+from huggingface_hub import hf_hub_download
+from datasets import load_dataset
+from PIL import Image
+from torchvision.models import inception_v3
+from torchmetrics.image.fid import FrechetInceptionDistance
+from vis_utils import turboedit_img
 
-# Define paths
-real_images_path = "path_to_real_images"  # Folder containing real images
-generated_images_path = "path_to_generated_images"  # Folder containing generated images
+dataset = load_dataset("dhruvrnaik/flintstones_story", split="train[:10%]")
+image_folder = "true_img"
+generated_folder = "turbo_img"
+os.makedirs(image_folder, exist_ok=True)
+os.makedirs(generated_folder, exist_ok=True)
 
-# Prepare images (optional preprocessing if needed)
+def save_ground_truth_images():
+    for i, example in enumerate(dataset):
+        image = example['image']  # Automatically decoded to a PIL Image by the dataset
+        image.save(os.path.join(image_folder, f"image_{i}.png"))
+
+
+save_ground_truth_images()
+
+def generate_images():
+    for i in range(len(dataset) - 1):
+        source_example = dataset[i]
+        target_example = dataset[i + 1]
+
+        source_prompt = source_example['text']
+        target_prompt = target_example['text']
+        source_image = source_example['image']
+
+        # Generate target image using turboedit_img
+        generated_image = turboedit_img(
+            image=source_image,
+            src_prompt=source_prompt,
+            target_prompt=target_prompt, 
+            seed=7,
+            w1=1
+        )
+
+        generated_image.save(os.path.join(generated_folder, f"image_{i}.png"))
+
+generate_images()
+
+fid = FrechetInceptionDistance(feature=1024)
+
 transform = transforms.Compose([
-    transforms.Resize((299, 299)),  # Resize to match InceptionV3 input size
+    transforms.Resize((299, 299)),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalization
+    transforms.ConvertImageDtype(torch.uint8) 
 ])
 
-# Load Real Images
-real_dataset = ImageFolder(root=real_images_path, transform=transform)
-real_dataloader = DataLoader(real_dataset, batch_size=32, shuffle=False)
+def prepare_images(folder):
+    images = []
+    for image_file in sorted(os.listdir(folder)):
+        image = Image.open(os.path.join(folder, image_file))
+        image = transform(image)
+        images.append(image)
+    return torch.stack(images)
 
-# Load Generated Images
-gen_dataset = ImageFolder(root=generated_images_path, transform=transform)
-gen_dataloader = DataLoader(gen_dataset, batch_size=32, shuffle=False)
+print("Preparing ground truth images...")
+ground_truth_images = prepare_images(image_folder)
+print("Preparing generated images...")
+generated_images = prepare_images(generated_folder)
 
-# Optionally save the images to verify preprocessing
-# Uncomment below to save transformed images locally
-# for idx, (image, _) in enumerate(real_dataloader):
-#     save_image(image, f"preprocessed_real_{idx}.png")
+fid.update(ground_truth_images, real=True)
+fid.update(generated_images, real=False)
 
-# Calculate FID score using torch-fidelity
-metrics = calculate_metrics(
-    input1=real_images_path,
-    input2=generated_images_path,
-    fid=True,  # Specify to calculate FID
-)
-
-# Print the FID Score
-print(f"FID Score: {metrics['frechet_inception_distance']}")
+fid_score = fid.compute()
+print(f"FID Score: {fid_score}")
