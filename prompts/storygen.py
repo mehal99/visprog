@@ -65,13 +65,14 @@ STORY = STORYTEXT(query="Pororo and friends are dancing in the snow. Petty comes
 STORY_TEXT_RESULT=RESULT(var=STORY)
 FINAL_RESULT=RESULT(var=IMAGE2)
 
-Instruction: Visualize this story: Wilma, Barney and Betty are preparing for Fred's birthday. Wilma puts candles on the cake. Fred enters the room. He blows the candles.
+Instruction: 
+Visualize this story: Wilma, Barney and Betty are preparing for Fred's birthday. Wilma puts candles on the cake. Fred enters the room. He blows the candles.
 Program:
-IMAGE1=IMGEDIT(image=IMAGE, src_prompt='Everyone is around the cake', target_prompt='Everyone is around the cake with candles', seed = 7, w1 = 1)
+IMAGE1=IMGEDIT(image=IMAGE, src_prompt='Everyone is around the cake',target_prompt='Everyone is around the cake with candles', seed=7, w1=1)
 OBJ0=SEG(image=IMAGE1)
 OBJ1=SELECT(image=IMAGE1,object=OBJ0,query='cake',category=None)
 IMAGE2=ADDCHAR(image=IMAGE1,object=OBJ1,char='fred')
-IMAGE3=IMGEDIT(image=IMAGE, src_prompt='Fred enters the room', target_prompt='Fred is blowing the candles', seed = 7, w1 = 1)
+IMAGE3=IMGEDIT(image=IMAGE, src_prompt='Fred is looking at candles',target_prompt='Fred is blowing the candles', seed=7, w1=1)
 STORY = STORYTEXT(query="Wilma, Barney and Betty are preparing for Fred's birthday. Wilma puts candles on the cake. Fred enters the room. He blows the candles.")
 STORY_TEXT_RESULT=RESULT(var=STORY)
 FINAL_RESULT=RESULT(var=IMAGE3)
