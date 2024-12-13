@@ -2,8 +2,6 @@
 
 [ [Project Page](https://prior.allenai.org/projects/visprog) | [Arxiv Paper](https://arxiv.org/abs/2211.11559) | [Blog](https://blog.allenai.org/visual-programming-ca58c7af51cd) ]
 
-![teaser](assets/teaser2.png)
-
 This repository contains the official code for VisProg - a neuro-symbolic system that solves complex and compositional visual tasks given natural language instructions. VisProg uses the in-context learning ability of GPT3 to generate python programs which are then executed to get both the solution and a comprehensive and interpretable rationale. Each line of the generated program may invoke one of several off-the-shelf computer vision models, image processing routines, or python functions to produce intermediate outputs that may be consumed by subsequent parts of the program.
 
 This code base has been designed to be:
@@ -57,9 +55,6 @@ ANSWER1=COUNT(box=BOX1)
 ANSWER2=EVAL(expr="{ANSWER0} + {ANSWER1}")
 FINAL_RESULT=RESULT(var=ANSWER2)
 ```
-
-### Visual Rationale
-![assets/rationale.png](assets/rationale.png)
 
 # What if VisProg doesn't solve your task?
 It is possible that the instruction you provide is not solved correctly by VisProg. This can happen for a few reasons:
