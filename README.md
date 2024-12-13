@@ -1,15 +1,4 @@
-🔥 Checkout our new work [CodeNav](https://github.com/allenai/codenav) which addresses many limitations of VisProg and generalizes it further: 🔥 <br>
-
-✅ ~~Write tool descriptions~~ Point to the codebase which you want the CodeNav agent to use - that's right, the raw source code! - CodeNav will index and search the source code directly <br>
-✅ ~~Generate the whole program at once~~ CodeNav iteratively generates code (which imports and invokes functions and classes from your codebase), executes it, and then decides the next step based on the execution output. The next step could be searching in the codebase or writing more code <br>
-✅ ~~Generate one function call per line~~ CodeNav generates free-form code - think of it similar to writing a code cell in an ipython notebook. While executing the current code block, CodeNav has access to global variables created while executing previous code blocks <br>
-✅ ~~Give up if there's an execution error~~ CodeNav will look at execution results including errors, new variables created, and STDOUT, and will try to fix errors in the next step <br>
-✅ ~~Implement tools as simple function calls~~ CodeNav gives you, as the developer of tools, flexibility to build a full-fledged codebase as you see fit - use abstractions, use object-oriented programming - just generally follow good software development practices (meaningful class/function/variable names, docstrics, specifying argument types in your code help)
-
-
-
-# Visual Programming: Compositional visual reasoning without training (CVPR 2023 Best Paper!)
-By [Tanmay Gupta](http://tanmaygupta.info/) and  [Aniruddha Kembhavi](https://anikem.github.io/)
+# Visual Programming: Compositional visual reasoning without training 
 
 [ [Project Page](https://prior.allenai.org/projects/visprog) | [Arxiv Paper](https://arxiv.org/abs/2211.11559) | [Blog](https://blog.allenai.org/visual-programming-ca58c7af51cd) ]
 
@@ -38,6 +27,7 @@ You will find a notebook for each of the following tasks, but they are quite sim
 - Natural language image editing: [`notebooks/image_editing.ipynb`](notebooks/image_editing.ipynb)
 - NLVR: [`notebooks/nlvr.ipynb`](notebooks/nlvr.ipynb)
 - GQA: [`notebooks/gqa.ipynb`](notebooks/gqa.ipynb)
+- Text conditioned story generation: [`notebooks/story_gen.ipynb`](notebooks/story_gen.ipynb)
 
 Simply, enter your OpenAI API key in the cell that currently reads `<Enter your key here>` and run the notebook. The notebooks are designed to be self-contained and should run end-to-end without any additional setup.
 
@@ -117,17 +107,9 @@ It is possible that the instruction you provide is not solved correctly by VisPr
 - Add your in-context examples to a new file `prompts/your_task_or_dataset_name.py`. Note that instead of using in-context examples to generate programs, you may experiment with different ways of prompting such as providing function signatures and docstrings without needing to change the code at all!
 - You can now play with examples from this dataset using a notebook similar to those in the `notebooks/` folder or create a python script to run inference on a large number of examples.
 
-# Here's what VisProg can do today
-![assets/teaser1.png](assets/teaser1.png)
-
-# A summary of currently available modules
+# Workflow
 ![assets/modules.png](assets/modules.png)
 
-*Note that we have replaced ViLT for VQA with a more performant model called BLIP which was recently made available on Huggingface. This shows how easy it is to swap out or upgrade modules in VisProg.
-
-# Changes since the version used in the CVPR paper
-- GPT3 upgraded to `text-davinci-003` from `text-davinci-002`
-- VQA module upgraded from ViLT to the more performant BLIP
 
 # Citation
 If you find this code useful in your research, please consider citing:
